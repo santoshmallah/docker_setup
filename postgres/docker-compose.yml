@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: netrix
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - /home/santosh/dockervolumes/postgres_data:/var/lib/postgresql/data
+    networks:
+      - my_network
+    restart: always
+  
+  mysql:
+    image: mysql:9.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: root
+      MYSQL_USER: netrix
+      MYSQL_PASSWORD: netrix
+    ports:
+      - "3306:3306"
+    volumes:
+      - /home/santosh/dockervolumes/mysql_db_data:/var/lib/mysql
+    networks:
+      - my_network
+    restart: always
+
+volumes:
+  postgres_data:
+
+networks:
+  my_network:
+    driver: bridge
