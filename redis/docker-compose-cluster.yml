@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+    redis-1:
+        image: redis:7.2.5
+        container_name: redis-1
+        ports:
+          - "6379:7000"
+        volumes:
+          - ./redis-1/redis.conf:/usr/local/etc/redis/redis.conf
+          - /home/santosh/dockervolumes/redis-data-1:/data
+        restart: always
+        command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
+        restart: always
+        networks:
+          - my_network
+    redis-2:
+        image: redis:7.2.5
+        container_name: redis-2
+        ports:
+          - "6380:7000"
+        volumes:
+          - ./redis-2/redis.conf:/usr/local/etc/redis/redis.conf
+          - /home/santosh/dockervolumes/redis-data-2:/data
+        restart: always
+        command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
+        restart: always
+        networks:
+          - my_network
+    redis-3:
+        image: redis:7.2.5
+        container_name: redis-3
+        ports:
+          - "6381:7000"
+        volumes:
+          - ./redis-3/redis.conf:/usr/local/etc/redis/redis.conf
+          - /home/santosh/dockervolumes/redis-data-3:/data
+        restart: always
+        command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
+        restart: always
+        networks:
+          - my_network
+    redis-4:
+        image: redis:7.2.5
+        container_name: redis-4
+        ports:
+          - "6382:7000"
+        volumes:
+          - ./redis-4/redis.conf:/usr/local/etc/redis/redis.conf
+          - /home/santosh/dockervolumes/redis-data-4:/data
+        restart: always
+        command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
+        restart: always
+        networks:
+          - my_network
+    redis-5:
+        image: redis:7.2.5
+        container_name: redis-5
+        ports:
+          - "6383:7000"
+        volumes:
+          - ./redis-5/redis.conf:/usr/local/etc/redis/redis.conf
+          - /home/santosh/dockervolumes/redis-data-5:/data
+        restart: always
+        command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
+        restart: always
+        networks:
+          - my_network
+    redis-6:
+        image: redis:7.2.5
+        container_name: redis-6
+        ports:
+          - "6384:7000"
+        volumes:
+          - ./redis-6/redis.conf:/usr/local/etc/redis/redis.conf
+          - /home/santosh/dockervolumes/redis-data-6:/data
+        restart: always
+        command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
+        restart: always
+        networks:
+          - my_network
+networks:
+    my_network:
+        driver: bridge

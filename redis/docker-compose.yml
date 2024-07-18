@@ -7,8 +7,10 @@ services:
     ports:
       - "6379:6379"
     volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
       - /home/santosh/dockervolumes/redis-data:/data
     restart: always
+    command: ["sh", "-c","redis-server /usr/local/etc/redis/redis.conf"]
     networks:
       - my_network
 
