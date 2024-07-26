@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  apachedrill:
+    image: apache/drill
+    container_name: apachedrill
+    ports:
+      - "8047:8047"
+      - "31010:31010"
+    volumes:
+      - /home/santosh/dockervolumes/apachedrill:/mnt
+    networks:
+      -  my_network
+    stdin_open: true
+    restart: always
+networks:
+  my_network:
+    name: my_network
+    driver: bridge
