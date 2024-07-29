@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  trinodb:
+    image: trinodb/trino:452
+    container_name: trinodb
+    ports:
+      - "8082:8080"
+    environment:
+      - CATALOG_MANAGEMENT=dynamic
+    volumes:
+      - /home/santosh/dockervolumes:/etc/trino trinodb/trino
+      - /home/santosh/trino/catalog/elasticsearch.properties:/etc/trino/catalog/elasticsearch.properties
+    networks:
+      -  my_network
+    extra_hosts:
+      - "elasticsearch:172.25.189.18"
+    restart: always
+networks:
+  my_network:
+    name: my_network
+    driver: bridge
