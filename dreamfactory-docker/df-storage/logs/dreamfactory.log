@@ -1,0 +1,3 @@
+[2024-08-19T13:01:20.400759+00:00] local.ALERT: Could not get cors config from DB - SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dreamfactory.cors_config' doesn't exist (SQL: select * from `cors_config` where `enabled` = 1)  
+[2024-08-19T13:10:16.708975+00:00] local.ALERT: Could not get cors config from DB - SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dreamfactory.cors_config' doesn't exist (SQL: select * from `cors_config` where `enabled` = 1)  
+[2024-08-19T13:16:02.196879+00:00] local.ALERT: Could not get cors config from DB - SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dreamfactory.cors_config' doesn't exist (SQL: select * from `cors_config` where `enabled` = 1)  
