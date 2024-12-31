@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  kowl:
+    image: quay.io/cloudhut/kowl:master
+    container_name: kafka_kowl
+    environment:
+      KAFKA_BROKERS: host.docker.internal:9092
+    networks:
+      - my_network
+    ports:
+      - "8080:8080"
+networks:
+  my_network:
+    name: my_network
+    driver: bridge

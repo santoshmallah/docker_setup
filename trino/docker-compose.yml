@@ -14,7 +14,7 @@ services:
       -  my_network
     extra_hosts:
       - "elasticsearch:172.25.189.18"
-    restart: always
+        #restart: always
 networks:
   my_network:
     name: my_network
