@@ -22,6 +22,7 @@ services:
     volumes:
       - ./kafka_data/data:/var/lib/kafka/data
       - ./kafka_data/config:/opt/kafka/config
+    restart: always
 
 volumes:
   kafka_data:

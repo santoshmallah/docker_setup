@@ -9,6 +9,7 @@ services:
       - my_network
     ports:
       - "9093:8080"
+    restart: always
 networks:
   my_network:
     name: my_network
