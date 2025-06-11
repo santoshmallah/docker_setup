@@ -1,0 +1,128 @@
+package com.example.cdc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.cassandra.db.Mutation;
+import org.apache.cassandra.db.PartitionUpdate;
+import org.apache.cassandra.db.commitlog.AbstractCommitLogReadHandler;
+import org.apache.cassandra.db.commitlog.CommitLogDescriptor;
+import org.apache.cassandra.db.commitlog.CommitLogReader;
+import org.apache.cassandra.db.commitlog.CommitLogReadHandler;
+import org.apache.cassandra.db.commitlog.LogPosition;
+import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * A standalone Java class that tails Cassandra 4.0.17 CDC commit logs and publishes mutations as JSON to Kafka.
+ *
+ * Usage:
+ *   java -cp "<all_jars>" com.example.cdc.CustomCommitLogReader <cdcDir> <kafkaBootstrap> <topicPrefix>
+ */
+public class CustomCommitLogReader {
+    private final String cdcDir;
+    private final String topicPrefix;
+    private final KafkaProducer<String, String> producer;
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final Set<String> processedFiles = new HashSet<>();
+
+    public CustomCommitLogReader(String cdcDir, String kafkaBootstrap, String topicPrefix) {
+        this.cdcDir = cdcDir;
+        this.topicPrefix = topicPrefix;
+        Properties props = new Properties();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrap);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        this.producer = new KafkaProducer<>(props);
+    }
+
+    public void start() {
+        System.out.printf("Starting CDC reader on '%s', publishing to Kafka '%s.*'%n", cdcDir, topicPrefix);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+            this::scanCDC, 0, 2, TimeUnit.SECONDS
+        );
+    }
+
+    private void scanCDC() {
+        File dir = new File(cdcDir);
+        File[] files = dir.listFiles((d, n) -> n.endsWith(".log") || n.endsWith(".cdc"));
+        if (files == null) return;
+
+        Arrays.sort(files, Comparator.comparingLong(File::lastModified));
+        for (File file : files) {
+            if (!processedFiles.add(file.getName())) {
+                continue; // already done
+            }
+            System.out.println("Processing CDC file: " + file.getName());
+            try (CommitLogReader reader = new CommitLogReader()) {
+                CommitLogReadHandler handler = new AbstractCommitLogReadHandler(null, null) {
+                    @Override
+                    public boolean handleMutation(Mutation mutation, int size,
+                                                  CommitLogDescriptor desc, LogPosition pos) {
+                        try {
+                            String keyspace = mutation.getKeyspaceName();
+                            String topic = topicPrefix + "." + keyspace;
+                            String key = ByteBufferUtil.bytesToHex(mutation.key().getKey());
+
+                            ObjectNode event = mapper.createObjectNode();
+                            event.put("keyspace", keyspace);
+                            event.put("partitionKey", key);
+
+                            for (PartitionUpdate update : mutation.getPartitionUpdates()) {
+                                ObjectNode tableNode = mapper.createObjectNode();
+                                tableNode.put("table", update.metadata().cfName);
+                                ObjectNode rowNode = mapper.createObjectNode();
+                                update.forEach(row -> update.metadata().regularColumns().forEach(col -> {
+                                    ByteBuffer val = row.getCell(col) != null ? row.getCell(col).value() : null;
+                                    if (val != null) {
+                                        String colName = col.name.toString();
+                                        String colValue = update.metadata().getColumn(col.name).type.compose(val).toString();
+                                        rowNode.put(colName, colValue);
+                                    }
+                                }));
+                                tableNode.set("row", rowNode);
+                                event.set(update.metadata().cfName, tableNode);
+                            }
+
+                            String json = mapper.writeValueAsString(event);
+                            producer.send(new ProducerRecord<>(topic, key, json));
+                        } catch (Exception e) {
+                            System.err.println("Error processing mutation: " + e.getMessage());
+                        }
+                        return true; // continue
+                    }
+                };
+                reader.readCommitLogSegments(Collections.singletonList(file), handler);
+            } catch (Exception e) {
+                System.err.printf("Failed to read commit log file '%s': %s%n",
+                                  file.getName(), e.getMessage());
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 3) {
+            System.err.println("Usage: CustomCommitLogReader <cdcDir> <kafkaBootstrap> <topicPrefix>");
+            System.exit(1);
+        }
+        String cdcDir = args[0];
+        String kafkaBootstrap = args[1];
+        String topicPrefix = args[2];
+
+        CustomCommitLogReader reader = new CustomCommitLogReader(cdcDir, kafkaBootstrap, topicPrefix);
+        reader.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down CDC reader...");
+            reader.producer.close();
+        }));
+    }
+}

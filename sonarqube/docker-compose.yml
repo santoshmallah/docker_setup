@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  sonar_cube:
+    image: sonarqube:9.9.8-community
+    container_name: sonar_qube
+    ports:
+      - 9000:9000
+    restart: always
+    volumes:
+      - ./sonarqube/data:/opt/sonarqube/data
+      - ./sonarqube/logs:/opt/sonarqube/logs
+      - ./sonarqube/extension:/opt/sonarqube/extensions
+    networks:
+      - my_network
+networks:
+  my_network:
+    name: my_network
+    driver: bridge

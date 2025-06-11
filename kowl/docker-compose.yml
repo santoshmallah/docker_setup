@@ -4,7 +4,7 @@ services:
     image: quay.io/cloudhut/kowl:master
     container_name: kafka_kowl
     environment:
-      KAFKA_BROKERS: kafka_broker_0:9092
+      KAFKA_BROKERS: kafka_broker_0:9094
     networks:
       - my_network
     ports:
